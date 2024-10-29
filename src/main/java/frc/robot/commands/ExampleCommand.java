@@ -5,6 +5,8 @@
 
 package frc.robot.commands;
 
+import edu.wpi.first.wpilibj.Timer;
+import frc.robot.sensors.RomiGyro;
 import frc.robot.subsystems.RomiDrivetrain;
 import edu.wpi.first.wpilibj2.command.Command;
 
@@ -15,26 +17,29 @@ public class ExampleCommand extends Command
 {
     @SuppressWarnings({"PMD.UnusedPrivateField", "PMD.SingularField"})
     private final RomiDrivetrain subsystem;
+    private final RomiGyro gyro = new RomiGyro();
 
+    final double kP = 25;
+    final double kI = 12;
+    final double kD = 0.8;
+
+    double heading;
+    double errorSum;
+    double lastTimeStamp;
+    double lastError;
+
+    double outputDiff;
     /**
      * Creates a new ExampleCommand.
      *
      * @param subsystem The subsystem used by this command.
      */
-    Command driveSquare = null;
     public ExampleCommand(RomiDrivetrain subsystem)
     {
         this.subsystem = subsystem;
         // Use addRequirements() here to declare subsystem dependencies.
         addRequirements(subsystem);
 
-        driveSquare = new DriveDistance(0.6,6,subsystem).
-                andThen(new TurnDegrees(0.4, 75, subsystem))
-                .andThen(new DriveDistance(0.6,6,subsystem))
-                .andThen(new TurnDegrees(0.4, 75, subsystem))
-                .andThen(new DriveDistance(0.6,6,subsystem))
-                .andThen(new TurnDegrees(0.4, 75, subsystem))
-                .andThen(new DriveDistance(0.6,6,subsystem));
 
     }
 
@@ -42,27 +47,43 @@ public class ExampleCommand extends Command
     // Called when the command is initially scheduled.
     @Override
     public void initialize() {
-        driveSquare.initialize();
+        heading = gyro.getAngleZ();
+        subsystem.resetEncoders();
+
+        errorSum = 0;
+        lastError = 0;
+        lastTimeStamp = Timer.getFPGATimestamp();
+
     }
     
     
     // Called every time the scheduler runs while the command is scheduled.
     @Override
     public void execute() {
-        driveSquare.execute();
+        double error = heading - gyro.getAngleZ();
+
+        double dt = Timer.getFPGATimestamp() - lastTimeStamp;
+        double errorRate = (error - lastError) / dt;
+        errorSum += error * dt;
+
+
+
+        outputDiff = kP * error + kI * errorSum + kD * errorRate;
+        // Drives forward continuously at half speed, using the gyro to stabilize the heading
+        subsystem.tankDrive(0.8 - outputDiff, 0.8 + outputDiff);
     }
     
     
     // Called once the command ends or is interrupted.
     @Override
     public void end(boolean interrupted) {
-        driveSquare.end(interrupted);
+        subsystem.tankDrive(0,0);
     }
     
     
     // Returns true when the command should end.
     @Override
     public boolean isFinished() {
-        return driveSquare.isFinished();
+        return subsystem.getAverageDistanceInch() > 36;
     }
 }

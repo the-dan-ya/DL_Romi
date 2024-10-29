@@ -7,7 +7,9 @@ package frc.robot;
 
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.XboxController;
+import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.RunCommand;
+import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.JoystickButton;
 import frc.robot.commands.*;
 import frc.robot.subsystems.RomiDrivetrain;
@@ -27,24 +29,17 @@ public class RobotContainer
     private final RomiDrivetrain romiDrivetrain = new RomiDrivetrain();
     
     private final ExampleCommand autoCommand = new ExampleCommand(romiDrivetrain);
-    private final Joystick joystick = new Joystick(0);
+    //private final Joystick joystick = new Joystick(0);
+    private final CommandXboxController xboxController = new CommandXboxController(0);
 
-    Command driveSquare = new DriveSquare(romiDrivetrain);
-    Command driveTriangle = new DriveTriangle(romiDrivetrain);
-    Command driveCircle = new DriveCircle(0.4,6,romiDrivetrain);
     /** The container for the robot. Contains subsystems, OI devices, and commands. */
     public RobotContainer()
     {
         // Configure the button bindings
         configureButtonBindings();
-        
-        JoystickButton key_j = new JoystickButton(joystick,1);
-        JoystickButton key_k = new JoystickButton(joystick,2);
-        JoystickButton key_l = new JoystickButton(joystick,3);
 
-        key_j.onTrue(driveSquare);
-        key_k.onTrue(driveTriangle);
-        key_l.onTrue(driveCircle);
+
+
 
     }
     
@@ -56,7 +51,24 @@ public class RobotContainer
      * edu.wpi.first.wpilibj2.command.button.JoystickButton}.
      */
     private void configureButtonBindings() {
-        romiDrivetrain.setDefaultCommand(new RunCommand(() -> romiDrivetrain.arcadeDrive(joystick.getRawAxis(0), joystick.getRawAxis(1)), romiDrivetrain));
+        romiDrivetrain.setDefaultCommand(new RunCommand(() -> romiDrivetrain.arcadeDrive(-xboxController.getRawAxis(1), -xboxController.getRawAxis(4)), romiDrivetrain));
+        //romiDrivetrain.setDefaultCommand(new RunCommand(() -> romiDrivetrain.arcadeDrive(joystick.getRawAxis(0), joystick.getRawAxis(1)), romiDrivetrain));
+
+        /*
+        JoystickButton key_j = new JoystickButton(joystick,1);
+        JoystickButton key_k = new JoystickButton(joystick,2);
+        JoystickButton key_l = new JoystickButton(joystick,3);
+
+        key_j.onTrue(romiDrivetrain.driveSquare(6,0.5));
+        key_k.onTrue(romiDrivetrain.driveTriangle(6,0.5));
+        key_l.onTrue(romiDrivetrain.driveCircle(12,0.5));
+        */
+
+        xboxController.a().onTrue(romiDrivetrain.driveSquare(6,0.4));
+        xboxController.b().onTrue(romiDrivetrain.driveTriangle(6,0.4));
+        xboxController.x().onTrue(romiDrivetrain.driveCircle(12,0.3));
+        xboxController.y().onTrue(romiDrivetrain.driveCircle(24,0.5));
+
     }
     
     
